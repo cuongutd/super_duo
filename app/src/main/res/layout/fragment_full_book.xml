@@ -17,18 +17,40 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal|top">
 
-                <TextView
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/fullBookTitle"
-                    android:textSize="@dimen/head_line"
-                    android:textIsSelectable="true"
-                    android:textStyle="bold"
-                    android:paddingRight="20dp"
-                    android:layout_alignParentTop="true"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true"
-                    android:layout_margin="10dp"/>
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/titleLayout">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/fullBookTitle"
+                        android:textSize="@dimen/head_line"
+                        android:textIsSelectable="true"
+                        android:textStyle="bold"
+                        android:paddingRight="20dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentStart="true"
+                        android:layout_margin="10dp"
+                        android:layout_weight="9" />
+
+                    <ImageButton
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/back_button"
+                        android:id="@+id/backButton"
+                        android:onClick="goBack"
+                        android:src="@drawable/ic_action_undo"
+                        style="?android:attr/buttonBarButtonStyle"
+                        android:layout_gravity="right|top"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignRight="@+id/fullBookTitle"
+                        android:layout_alignEnd="@+id/fullBookTitle"
+                        android:layout_weight="1" />
+                </LinearLayout>
 
                 <ImageView
                     android:layout_width="wrap_content"
@@ -36,9 +58,9 @@
                     android:id="@+id/fullBookCover"
                     android:contentDescription="@string/book_cover"
                     android:layout_marginTop="15dp"
-                    android:layout_below="@+id/fullBookTitle"
-                    android:layout_alignLeft="@+id/fullBookTitle"
-                    android:layout_alignStart="@+id/fullBookTitle"/>
+                    android:layout_below="@+id/titleLayout"
+                    android:layout_alignLeft="@+id/titleLayout"
+                    android:layout_alignStart="@+id/titleLayout"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -88,19 +110,6 @@
                         android:textStyle="bold"
                         android:gravity="right|top"/>
                 </LinearLayout>
-
-                <ImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/back_button"
-                    android:id="@+id/backButton"
-                    android:onClick="goBack"
-                    android:src="@drawable/ic_action_undo"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_gravity="right|top"
-                    android:layout_alignParentTop="true"
-                    android:layout_alignRight="@+id/fullBookTitle"
-                    android:layout_alignEnd="@+id/fullBookTitle"/>
 
 
             </RelativeLayout>
