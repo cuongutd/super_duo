@@ -25,7 +25,6 @@ import net.sourceforge.zbar.android.ScanBookActivity;
 
 import it.jaschke.alexandria.data.AlexandriaContract;
 import it.jaschke.alexandria.services.BookService;
-import it.jaschke.alexandria.services.DownloadImage;
 
 
 public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -197,7 +196,7 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
         }
         String imgUrl = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.IMAGE_URL));
         if(Patterns.WEB_URL.matcher(imgUrl).matches()){
-            new DownloadImage((ImageView) rootView.findViewById(R.id.bookCover)).execute(imgUrl);
+            Utility.downloadImageToView(imgUrl, (ImageView) rootView.findViewById(R.id.bookCover), getActivity());
             rootView.findViewById(R.id.bookCover).setVisibility(View.VISIBLE);
         }
 

@@ -19,9 +19,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import it.jaschke.alexandria.data.AlexandriaContract;
 import it.jaschke.alexandria.services.BookService;
-import it.jaschke.alexandria.services.DownloadImage;
 
 
 public class BookDetail extends MyFragment implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -45,7 +46,7 @@ public class BookDetail extends MyFragment implements LoaderManager.LoaderCallba
 
         //when rotating the book detail screen several times, exception occurred at shareActionProvider.setShareIntent(shareIntent);
         //onCreateOptionsMenu() is not called. the shareActionProvider is null. retain the fragment fixed the issue
-        setRetainInstance(true);
+        //setRetainInstance(true);
         setHasOptionsMenu(true);
     }
 
@@ -108,7 +109,8 @@ public class BookDetail extends MyFragment implements LoaderManager.LoaderCallba
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text) + bookTitle);
-        shareActionProvider.setShareIntent(shareIntent);
+        if (shareActionProvider != null)
+            shareActionProvider.setShareIntent(shareIntent);
 
         String bookSubTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.SUBTITLE));
         ((TextView) rootView.findViewById(R.id.fullBookSubTitle)).setText(bookSubTitle);
@@ -126,8 +128,10 @@ public class BookDetail extends MyFragment implements LoaderManager.LoaderCallba
         }
         String imgUrl = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.IMAGE_URL));
         if(Patterns.WEB_URL.matcher(imgUrl).matches()){
-            new DownloadImage((ImageView) rootView.findViewById(R.id.fullBookCover)).execute(imgUrl);
-            rootView.findViewById(R.id.fullBookCover).setVisibility(View.VISIBLE);
+            ImageView fullBookCover = (ImageView) rootView.findViewById(R.id.fullBookCover);
+            Utility.downloadImageToView(imgUrl, fullBookCover, getActivity());
+            //new DownloadImage((ImageView) rootView.findViewById(R.id.fullBookCover)).execute(imgUrl);
+            fullBookCover.setVisibility(View.VISIBLE);
         }
 
         String categories = data.getString(data.getColumnIndex(AlexandriaContract.CategoryEntry.CATEGORY));
@@ -146,9 +150,10 @@ public class BookDetail extends MyFragment implements LoaderManager.LoaderCallba
 
     @Override
     public void onPause() {
-        super.onPause();//TODO call onDestroyView() why?
-        if(MainActivity.IS_TABLET && rootView.findViewById(R.id.right_container)==null){
-            getActivity().getSupportFragmentManager().popBackStack();
-        }
+        super.onPause();
+//        super.onDestroyView();// why?
+//        if(MainActivity.IS_TABLET && rootView.findViewById(R.id.right_container)==null){
+//            getActivity().getSupportFragmentManager().popBackStack();
+//        }
     }
 }

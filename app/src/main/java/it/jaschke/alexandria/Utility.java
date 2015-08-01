@@ -7,6 +7,10 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
+import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
 
 import it.jaschke.alexandria.services.BookService;
 
@@ -57,5 +61,12 @@ public class Utility {
 
     }
 
+        public static void downloadImageToView(String imgUrl, ImageView view, Context context){
+            try {
+                Picasso.with(context).load(imgUrl).into(view);
+            }catch(Exception e){
+                Log.e("Error loading book img", e.getMessage());
+            }
+        }
 
 }

@@ -39,4 +39,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:21.0.3'
     compile 'com.android.support:support-annotations:22.2.0'
     compile files('libs/zbar.jar')
+    compile 'com.squareup.picasso:picasso:2.5.2'
 }
