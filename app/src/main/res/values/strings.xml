@@ -45,4 +45,6 @@
     <string name="score_desc">score</string>
     <string name="date_desc">match date</string>
     <string name="away_name_desc">away team</string>
+    <string name="emptyMsg">No result</string>
+    <string name="emptyMsgToday">No Result for Today</string>
 </resources>

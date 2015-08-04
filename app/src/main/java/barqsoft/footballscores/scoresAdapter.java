@@ -3,28 +3,49 @@ package barqsoft.footballscores;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.PictureDrawable;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.support.v4.widget.CursorAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.bumptech.glide.GenericRequestBuilder;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.model.StreamEncoder;
+import com.bumptech.glide.load.resource.file.FileToStreamDecoder;
+import com.bumptech.svgsample.app.SvgDecoder;
+import com.bumptech.svgsample.app.SvgDrawableTranscoder;
+import com.bumptech.svgsample.app.SvgSoftwareLayerSetter;
+import com.caverock.androidsvg.SVG;
+
+import java.io.InputStream;
 
 /**
  * Created by yehya khaled on 2/26/2015.
  */
 public class scoresAdapter extends CursorAdapter
 {
+    public double detail_match_id = 0;
+    public static final int COL_DATE = 1;
+    public static final int COL_MATCHTIME = 2;
     public static final int COL_HOME = 3;
     public static final int COL_AWAY = 4;
+    public static final int COL_LEAGUE = 5;
     public static final int COL_HOME_GOALS = 6;
     public static final int COL_AWAY_GOALS = 7;
-    public static final int COL_DATE = 1;
-    public static final int COL_LEAGUE = 5;
-    public static final int COL_MATCHDAY = 9;
-    public static final int COL_ID = 8;
-    public static final int COL_MATCHTIME = 2;
-    public double detail_match_id = 0;
+    public static final int COL_HOME_CREST = 8;
+    public static final int COL_AWAY_CREST = 9;
+    public static final int COL_ID = 10;
+    public static final int COL_MATCHDAY = 11;
     private String FOOTBALL_SCORES_HASHTAG = "#Football_Scores";
     public scoresAdapter(Context context,Cursor cursor,int flags)
     {
@@ -48,15 +69,26 @@ public class scoresAdapter extends CursorAdapter
         mHolder.home_name.setText(cursor.getString(COL_HOME));
         mHolder.away_name.setText(cursor.getString(COL_AWAY));
         mHolder.date.setText(cursor.getString(COL_MATCHTIME));
-        mHolder.score.setText(Utilies.getScores(cursor.getInt(COL_HOME_GOALS),cursor.getInt(COL_AWAY_GOALS)));
+        mHolder.score.setText(Utilies.getScores(cursor.getInt(COL_HOME_GOALS), cursor.getInt(COL_AWAY_GOALS)));
         mHolder.match_id = cursor.getDouble(COL_ID);
-        mHolder.home_crest.setImageResource(Utilies.getTeamCrestByTeamName(
-                cursor.getString(COL_HOME)));
-        mHolder.away_crest.setImageResource(Utilies.getTeamCrestByTeamName(
-                cursor.getString(COL_AWAY)
-        ));
+
+//        String s = cursor.getString(COL_HOME_CREST);
+//        if (s != null && !"".equals(s)) {
+//            mHolder.home_crest.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+//            mHolder.home_crest.setImageDrawable(Utilies.transformSVGImageToDrawable(s));
+//            //mHolder.home_crest.setImageBitmap(Utilies.transformSVGImageToBitmap(s));
+//        }
+//
+//        s = cursor.getString(COL_AWAY_CREST);
+//        if (s != null && !"".equals(s))
+//            mHolder.away_crest.setImageBitmap(Utilies.transformSVGImageToBitmap(s));
+
+        downloadImageToView(cursor.getString(COL_HOME_CREST), mHolder.home_crest, context);
+        downloadImageToView(cursor.getString(COL_AWAY_CREST), mHolder.away_crest, context);
+
         //Log.v(FetchScoreTask.LOG_TAG,mHolder.home_name.getText() + " Vs. " + mHolder.away_name.getText() +" id " + String.valueOf(mHolder.match_id));
         //Log.v(FetchScoreTask.LOG_TAG,String.valueOf(detail_match_id));
+
         LayoutInflater vi = (LayoutInflater) context.getApplicationContext()
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View v = vi.inflate(R.layout.detail_fragment, null);
@@ -67,12 +99,15 @@ public class scoresAdapter extends CursorAdapter
 
             container.addView(v, 0, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT
                     , ViewGroup.LayoutParams.MATCH_PARENT));
+
             TextView match_day = (TextView) v.findViewById(R.id.matchday_textview);
-            match_day.setText(Utilies.getMatchDay(cursor.getInt(COL_MATCHDAY),
-                    cursor.getInt(COL_LEAGUE)));
+            match_day.setText("Matchday : " +cursor.getInt(COL_MATCHDAY));
+
             TextView league = (TextView) v.findViewById(R.id.league_textview);
-            league.setText(Utilies.getLeague(cursor.getInt(COL_LEAGUE)));
+            league.setText(cursor.getString(COL_LEAGUE));
+
             Button share_button = (Button) v.findViewById(R.id.share_button);
+
             share_button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v)
@@ -97,4 +132,36 @@ public class scoresAdapter extends CursorAdapter
         return shareIntent;
     }
 
+    GenericRequestBuilder<Uri, InputStream, SVG, PictureDrawable> requestBuilder;
+
+    public GenericRequestBuilder getRequestBuilder(Context context){
+
+        if (requestBuilder == null)
+            requestBuilder = Glide.with(context)
+                    .using(Glide.buildStreamModelLoader(Uri.class, context), InputStream.class)
+                    .from(Uri.class)
+                    .as(SVG.class)
+                    .transcode(new SvgDrawableTranscoder(), PictureDrawable.class)
+                    .sourceEncoder(new StreamEncoder())
+                    .cacheDecoder(new FileToStreamDecoder<SVG>(new SvgDecoder()))
+                    .decoder(new SvgDecoder())
+                    .placeholder(R.drawable.image_loading)
+                    .error(R.drawable.image_error)
+                            //.animate(android.R.anim.fade_in)
+                    .listener(new SvgSoftwareLayerSetter<Uri>());
+
+        return requestBuilder;
+    }
+
+
+    public void downloadImageToView(String imgUrl, ImageView view, Context context) {
+
+        Log.d(scoresAdapter.class.getSimpleName(), "imgUrl: " + imgUrl);
+        getRequestBuilder(context)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        // SVG cannot be serialized so it's not worth to cache it
+                .load(Uri.parse(imgUrl))
+                .into(view);
+
+    }
 }

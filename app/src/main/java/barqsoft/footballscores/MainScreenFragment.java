@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import barqsoft.footballscores.service.myFetchService;
 
@@ -29,11 +30,6 @@ public class MainScreenFragment extends Fragment implements LoaderManager.Loader
     {
     }
 
-    private void update_scores()
-    {
-        Intent service_start = new Intent(getActivity(), myFetchService.class);
-        getActivity().startService(service_start);
-    }
     public void setFragmentDate(String date)
     {
         fragmentdate[0] = date;
@@ -41,9 +37,13 @@ public class MainScreenFragment extends Fragment implements LoaderManager.Loader
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              final Bundle savedInstanceState) {
-        update_scores();
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+
         final ListView score_list = (ListView) rootView.findViewById(R.id.scores_list);
+        TextView emptyText = (TextView)rootView.findViewById(R.id.emptyTextView);
+        score_list.setEmptyView(emptyText);
+
         mAdapter = new scoresAdapter(getActivity(),null,0);
         score_list.setAdapter(mAdapter);
         getLoaderManager().initLoader(SCORES_LOADER,null,this);

@@ -38,6 +38,7 @@ public class ScoreAppWidget extends AppWidgetProvider {
             // to a RemoteViewsService  through the specified intent.
             // This is how you populate the data.
             rv.setRemoteAdapter(appWidgetIds[i], R.id.scores_list_widget, intent);
+            rv.setEmptyView(R.id.scores_list_widget, R.id.emptyTextView);
 
             Intent toastIntent = new Intent(context, MainActivity.class);
             toastIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetIds[i]);
@@ -48,7 +49,7 @@ public class ScoreAppWidget extends AppWidgetProvider {
 
             rv.setPendingIntentTemplate(R.id.scores_list_widget, toastPendingIntent);
 
-
+            rv.setOnClickFillInIntent(R.id.emptyTextView, toastIntent);
 
             appWidgetManager.updateAppWidget(appWidgetIds[i], rv);
         }

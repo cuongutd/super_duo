@@ -20,4 +20,10 @@
         android:layout_height="match_parent"
         android:divider="@android:color/transparent"
         android:dividerHeight="15sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/emptyTextView"
+        android:text="@string/emptyMsg" />
 </FrameLayout>

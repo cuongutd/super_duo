@@ -7,6 +7,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import barqsoft.footballscores.service.myFetchService;
+
 public class MainActivity extends ActionBarActivity
 {
     public static int selected_match_id;
@@ -16,6 +18,13 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent intent = getIntent();
+        if (intent != null) { //called from widget
+
+            current_fragment = intent.getIntExtra("CURRENT_FRAGMENT", 2);
+        }
+
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
             my_main = new PagerFragment();
@@ -23,6 +32,7 @@ public class MainActivity extends ActionBarActivity
                     .add(R.id.container, my_main)
                     .commit();
         }
+
     }
 
 
