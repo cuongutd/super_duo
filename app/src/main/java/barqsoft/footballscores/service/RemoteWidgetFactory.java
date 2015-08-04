@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
+import android.graphics.Canvas;
 import android.graphics.drawable.PictureDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,19 +13,12 @@ import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.model.StreamEncoder;
-import com.bumptech.glide.load.resource.file.FileToStreamDecoder;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
-import com.bumptech.glide.request.target.Target;
-import com.bumptech.svgsample.app.SvgDecoder;
-import com.bumptech.svgsample.app.SvgDrawableTranscoder;
-import com.bumptech.svgsample.app.SvgSoftwareLayerSetter;
-import com.caverock.androidsvg.SVG;
+import com.larvalabs.svgandroid.SVGParser;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -85,13 +78,8 @@ public class RemoteWidgetFactory implements RemoteViewsService.RemoteViewsFactor
                     holder.home_name = (cursor.getString(scoresAdapter.COL_HOME));
                     holder.away_name = (cursor.getString(scoresAdapter.COL_AWAY));
 
-                    String s = cursor.getString(scoresAdapter.COL_HOME_CREST);
-                    if (s != null && !"".equals(s))
-                        holder.home_crest=Utilies.transformSVGImageToBitmap(s);
-
-                    s = cursor.getString(scoresAdapter.COL_AWAY_CREST);
-                    if (s != null && !"".equals(s))
-                        holder.away_crest=Utilies.transformSVGImageToBitmap(s);
+                    holder.home_crest = cursor.getString(scoresAdapter.COL_HOME_CREST);
+                    holder.away_crest = cursor.getString(scoresAdapter.COL_AWAY_CREST);
 
                     holder.date = (cursor.getString(scoresAdapter.COL_MATCHTIME));
                     holder.score = (Utilies.getScores(cursor.getInt(scoresAdapter.COL_HOME_GOALS), cursor.getInt(scoresAdapter.COL_AWAY_GOALS)));
@@ -120,6 +108,33 @@ public class RemoteWidgetFactory implements RemoteViewsService.RemoteViewsFactor
         return mWidgetItems.size();
     }
 
+    private Bitmap getBitmap(String svgURL) {
+        Bitmap bitmap = null;
+        PictureDrawable drawable = null;
+        HttpURLConnection m_connection = null;
+        BufferedReader reader = null;
+        String svgData = null;
+        try {
+            URL fetch = new URL(svgURL.replace("http", "https"));
+            m_connection = (HttpURLConnection) fetch.openConnection();
+            m_connection.connect();
+
+            // Read the input stream into a String
+            InputStream inputStream = m_connection.getInputStream();
+
+            com.larvalabs.svgandroid.SVG svg = SVGParser.getSVGFromInputStream(inputStream);
+            drawable = svg.createPictureDrawable();
+            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            canvas.drawPicture(drawable.getPicture());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return bitmap;
+    }
+
+
     @Override
     public RemoteViews getViewAt(int position) {
 
@@ -133,51 +148,12 @@ public class RemoteWidgetFactory implements RemoteViewsService.RemoteViewsFactor
         rv.setTextViewText(R.id.data_textview, mWidgetItems.get(position).date);
 
         //TODO: set correct images
-        //rv.setImageViewResource(R.id.home_crest, R.drawable.ic_launcher);
-        //rv.setImageViewResource(R.id.away_crest, R.drawable.ic_launcher);
-//        Utilies.getRequestBuilder(mContext).diskCacheStrategy(DiskCacheStrategy.SOURCE)
-//                // SVG cannot be serialized so it's not worth to cache it
-//                .load(Uri.parse(mWidgetItems.get(position).home_crest_url))
-//                .into(homeBitmapTarget);
-//
-//        rv.setImageViewBitmap(R.id.home_crest, homeBitmap);
-//
-//        Utilies.getRequestBuilder(mContext).diskCacheStrategy(DiskCacheStrategy.SOURCE)
-//                // SVG cannot be serialized so it's not worth to cache it
-//                .load(Uri.parse(mWidgetItems.get(position).away_crest_url))
-//                .into(awayBitmapTarget);
-//
-//        rv.setImageViewBitmap(R.id.away_crest, awayBitmap);
-
-//not working: ex You must call this method on the main thread
-//        try {
-//            Glide.with(mContext)
-//                    .using(Glide.buildStreamModelLoader(Uri.class, mContext), InputStream.class)
-//                    .from(Uri.class)
-//                    .as(SVG.class)
-//                    .transcode(new SvgDrawableTranscoder(), PictureDrawable.class)
-//                    .sourceEncoder(new StreamEncoder())
-//                    .cacheDecoder(new FileToStreamDecoder<SVG>(new SvgDecoder()))
-//                    .decoder(new SvgDecoder())
-//                    .listener(new SvgSoftwareLayerSetter<Uri>())
-//                    .load(Uri.parse(mWidgetItems.get(position).home_crest_url))
-//                    .into((Target)new SimpleTarget<Bitmap>(40, 40) {
-//                        @Override
-//                        public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
-//                            homeBitmap = resource;
-//                        }
-//
-//                    });
-//        } catch (Exception e) {
-//            Log.e(LOG_TAG, e.getMessage());
-//        }
-
-//        if (homeBitmap != null)
-//            rv.setImageViewBitmap(R.id.home_crest, homeBitmap);
-
-        //TODO: get svg image from in
-        //rv.setImageViewResource(R.id.home_crest, R.drawable.manchester_united);
-        //rv.setImageViewResource(R.id.away_crest, R.drawable.manchester_united);
+        Bitmap b = getBitmap(mWidgetItems.get(position).home_crest);
+        if (b != null)
+            rv.setImageViewBitmap(R.id.home_crest, b);
+        b = getBitmap(mWidgetItems.get(position).away_crest);
+        if (b != null)
+            rv.setImageViewBitmap(R.id.away_crest, b);
 
         Intent fillInIntent = new Intent();
         Bundle extras = new Bundle();
@@ -195,35 +171,6 @@ public class RemoteWidgetFactory implements RemoteViewsService.RemoteViewsFactor
         return rv;
     }
 
-//    Bitmap homeBitmap;
-//
-//    Target homeBitmapTarget = new SimpleTarget<Bitmap>() {
-//        @Override
-//        public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
-//            homeBitmap = resource;
-//        }
-//
-//        @Override
-//        public void onLoadFailed(Exception e, Drawable errorDrawable) {
-//            homeBitmap = null;
-//        }
-//
-//    };
-//
-//    Bitmap awayBitmap;
-//
-//    Target awayBitmapTarget = new SimpleTarget<Bitmap>() {
-//        @Override
-//        public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
-//            awayBitmap = resource;
-//        }
-//
-//        @Override
-//        public void onLoadFailed(Exception e, Drawable errorDrawable) {
-//            awayBitmap = null;
-//        }
-//
-//    };
 
     @Override
     public RemoteViews getLoadingView() {

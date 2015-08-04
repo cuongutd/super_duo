@@ -322,54 +322,6 @@ public class myFetchService extends IntentService
         return JSON_data;
     }
 
-    private String getSVGContent(String crestURL) {
-
-        if (null == crestURL|| crestURL.length() ==0)
-            return null;
-
-
-        HttpURLConnection m_connection = null;
-        BufferedReader reader = null;
-        String svgData = null;
-        try {
-            URL fetch = new URL(crestURL.replace("http", "https"));
-            m_connection = (HttpURLConnection) fetch.openConnection();
-            m_connection.connect();
-
-            // Read the input stream into a String
-            InputStream inputStream = m_connection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
-            if (inputStream != null) {
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line);
-                }
-
-                svgData = buffer.toString();
-            }
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "getSVGContent: " + crestURL);
-            e.printStackTrace();
-        } finally {
-            if (m_connection != null) {
-                m_connection.disconnect();
-            }
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Log.e(LOG_TAG, "Error Closing Stream: " + e.getStackTrace());
-                }
-            }
-        }
-
-        return svgData;
-    }
-
-
     private String getLeagueName(String soccerSeasonUrl){
         String league = "";
         Uri fetch_build = Uri.parse(soccerSeasonUrl);
