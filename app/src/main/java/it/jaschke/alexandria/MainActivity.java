@@ -34,12 +34,19 @@ public class MainActivity extends ActionBarActivity implements NavigationDrawerF
     public static boolean IS_TABLET = false;
     private BroadcastReceiver messageReceiver;
 
+    //this is used throughout the app.
+    public static boolean isTwoPane = false;
+
+
     public static final String MESSAGE_EVENT = "MESSAGE_EVENT";
     public static final String MESSAGE_KEY = "MESSAGE_EXTRA";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+
         IS_TABLET = isTablet();
 
         if(IS_TABLET){
@@ -47,6 +54,12 @@ public class MainActivity extends ActionBarActivity implements NavigationDrawerF
         }else {
             setContentView(R.layout.activity_main);
         }
+
+        if (findViewById(R.id.right_container)!=null)
+            isTwoPane = true;
+        else
+            isTwoPane = false;
+
 
         messageReceiver = new MessageReceiver();
         IntentFilter filter = new IntentFilter(MESSAGE_EVENT);
@@ -161,10 +174,6 @@ public class MainActivity extends ActionBarActivity implements NavigationDrawerF
         }
     }
 
-    public void goBack(View view) {
-        getSupportFragmentManager().popBackStack();
-    }
-
     private boolean isTablet() {
         return (getApplicationContext().getResources().getConfiguration().screenLayout
                 & Configuration.SCREENLAYOUT_SIZE_MASK)
@@ -173,8 +182,7 @@ public class MainActivity extends ActionBarActivity implements NavigationDrawerF
 
     @Override
     public void onBackPressed() {
-        if(getSupportFragmentManager().getBackStackEntryCount()<2 ||
-                (MainActivity.IS_TABLET && findViewById(R.id.right_container)!=null)){
+        if(getSupportFragmentManager().getBackStackEntryCount()<2 ||isTwoPane){
             finish();
         }
         super.onBackPressed();

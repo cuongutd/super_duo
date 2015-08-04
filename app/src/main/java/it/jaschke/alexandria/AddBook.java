@@ -18,9 +18,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
-
 import net.sourceforge.zbar.android.ScanBookActivity;
 
 import it.jaschke.alexandria.data.AlexandriaContract;
@@ -39,17 +36,17 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
     private String mScanFormat = "Format:";
     private String mScanContents = "Contents:";
 
+    private String mBookTitle;
+    private String mBookSubTitle;
+    private String mAuthors;
+    private String mImgUrl;
+    private String mCategories;
+
+
+
 
 
     public AddBook(){
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if(ean!=null) {
-            outState.putString(EAN_CONTENT, ean.getText().toString());
-        }
     }
 
     @Override
@@ -77,7 +74,7 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
                     ean = "978" + ean;
                 }
                 if (ean.length() < 13) {
-                    //clearFields();
+                    clearFields();
                     return;
                 }
                 //Once we have an ISBN, start a book intent
@@ -129,6 +126,15 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
         if(savedInstanceState!=null){
             ean.setText(savedInstanceState.getString(EAN_CONTENT));
             ean.setHint("");
+
+            mBookTitle = savedInstanceState.getString("mBookTitle");
+            mBookSubTitle = savedInstanceState.getString("mBookSubTitle");
+            mAuthors = savedInstanceState.getString("mAuthors");
+            mImgUrl = savedInstanceState.getString("mImgUrl");
+            mCategories = savedInstanceState.getString("mCategories");
+            populateViews();
+
+
         }
 
         return rootView;
@@ -137,10 +143,11 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
     /**called after scanning returned*/
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-
-        String contents = intent.getStringExtra(ScanBookActivity.ISBN_TAG);
-        if (contents != null) {
-            ean.setText(contents);
+        if (intent != null) {
+            String contents = intent.getStringExtra(ScanBookActivity.ISBN_TAG);
+            if (contents != null) {
+                ean.setText(contents);
+            }
         }
 
 //        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
@@ -180,32 +187,44 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
             return;
         }
 
-        String bookTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.TITLE));
-        ((TextView) rootView.findViewById(R.id.bookTitle)).setText(bookTitle);
-
-        String bookSubTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.SUBTITLE));
-        ((TextView) rootView.findViewById(R.id.bookSubTitle)).setText(bookSubTitle);
-
-        String authors = data.getString(data.getColumnIndex(AlexandriaContract.AuthorEntry.AUTHOR));
-
-        //some books returned with null authors, this if is to handle such cases
-        if (authors != null) {
-            String[] authorsArr = authors.split(",");
-            ((TextView) rootView.findViewById(R.id.authors)).setLines(authorsArr.length);
-            ((TextView) rootView.findViewById(R.id.authors)).setText(authors.replace(",", "\n"));
-        }
-        String imgUrl = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.IMAGE_URL));
-        if(Patterns.WEB_URL.matcher(imgUrl).matches()){
-            Utility.downloadImageToView(imgUrl, (ImageView) rootView.findViewById(R.id.bookCover), getActivity());
-            rootView.findViewById(R.id.bookCover).setVisibility(View.VISIBLE);
-        }
-
-        String categories = data.getString(data.getColumnIndex(AlexandriaContract.CategoryEntry.CATEGORY));
-        ((TextView) rootView.findViewById(R.id.categories)).setText(categories);
+        mBookTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.TITLE));
+        mBookSubTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.SUBTITLE));
+        mAuthors = data.getString(data.getColumnIndex(AlexandriaContract.AuthorEntry.AUTHOR));
+        mImgUrl = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.IMAGE_URL));
+        mCategories = data.getString(data.getColumnIndex(AlexandriaContract.CategoryEntry.CATEGORY));
+        populateViews();
 
         rootView.findViewById(R.id.save_button).setVisibility(View.VISIBLE);
         rootView.findViewById(R.id.delete_button).setVisibility(View.VISIBLE);
     }
+
+
+    private void populateViews(){
+
+        ((TextView) rootView.findViewById(R.id.bookTitle)).setText(mBookTitle);
+
+        ((TextView) rootView.findViewById(R.id.bookSubTitle)).setText(mBookSubTitle);
+
+        //some books returned with null authors, this if is to handle such cases
+        if (mAuthors != null) {
+            String[] authorsArr = mAuthors.split(",");
+            ((TextView) rootView.findViewById(R.id.authors)).setLines(authorsArr.length);
+            ((TextView) rootView.findViewById(R.id.authors)).setText(mAuthors.replace(",", "\n"));
+        }
+        if(Patterns.WEB_URL.matcher(mImgUrl).matches()){
+            ImageView fullBookCover = (ImageView) rootView.findViewById(R.id.bookCover);
+            Utility.downloadImageToView(mImgUrl, fullBookCover, getActivity());
+            fullBookCover.setVisibility(View.VISIBLE);
+        }
+
+        ((TextView) rootView.findViewById(R.id.categories)).setText(mCategories);
+
+
+    }
+
+
+
+
 
     @Override
     public void onLoaderReset(android.support.v4.content.Loader<Cursor> loader) {
@@ -213,11 +232,13 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
     }
 
     private void clearFields(){
-        ((TextView) rootView.findViewById(R.id.bookTitle)).setText("");
-        ((TextView) rootView.findViewById(R.id.bookSubTitle)).setText("");
-        ((TextView) rootView.findViewById(R.id.authors)).setText("");
-        ((TextView) rootView.findViewById(R.id.categories)).setText("");
-        rootView.findViewById(R.id.bookCover).setVisibility(View.INVISIBLE);
+        if ("".equals(ean.getText().toString())) {
+            ((TextView) rootView.findViewById(R.id.bookTitle)).setText("");
+            ((TextView) rootView.findViewById(R.id.bookSubTitle)).setText("");
+            ((TextView) rootView.findViewById(R.id.authors)).setText("");
+            ((TextView) rootView.findViewById(R.id.categories)).setText("");
+            rootView.findViewById(R.id.bookCover).setVisibility(View.INVISIBLE);
+        }
         rootView.findViewById(R.id.save_button).setVisibility(View.INVISIBLE);
         rootView.findViewById(R.id.delete_button).setVisibility(View.INVISIBLE);
     }
@@ -227,4 +248,21 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
         super.onAttach(activity);
         activity.setTitle(R.string.scan);
     }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+
+        outState.putString("mBookTitle", mBookTitle);
+        outState.putString("mBookSubTitle", mBookSubTitle);
+        outState.putString("mAuthors", mAuthors);
+        outState.putString("mImgUrl", mImgUrl);
+        outState.putString("mCategories", mCategories);
+
+        if(ean!=null) {
+            outState.putString(EAN_CONTENT, ean.getText().toString());
+        }
+
+        super.onSaveInstanceState(outState);
+    }
+
 }

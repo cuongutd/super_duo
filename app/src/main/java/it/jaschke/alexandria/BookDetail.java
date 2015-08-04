@@ -3,12 +3,10 @@ package it.jaschke.alexandria;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.ShareActionProvider;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -18,8 +16,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.squareup.picasso.Picasso;
 
 import it.jaschke.alexandria.data.AlexandriaContract;
 import it.jaschke.alexandria.services.BookService;
@@ -34,7 +30,13 @@ public class BookDetail extends MyFragment implements LoaderManager.LoaderCallba
     private final int LOADER_ID = 10;
     private View rootView;
     private String ean;
-    private String bookTitle;
+    private String mBookTitle;
+    private String mBookSubTitle;
+    private String mDesc;
+    private String mAuthors;
+    private String mImgUrl;
+    private String mCategories;
+
     private ShareActionProvider shareActionProvider;
 
     public BookDetail(){
@@ -71,6 +73,20 @@ public class BookDetail extends MyFragment implements LoaderManager.LoaderCallba
                 getActivity().getSupportFragmentManager().popBackStack();
             }
         });
+
+        if(savedInstanceState!=null){
+            mBookTitle = savedInstanceState.getString("mBookTitle");
+            mBookSubTitle = savedInstanceState.getString("mBookSubTitle");
+            mAuthors = savedInstanceState.getString("mAuthors");
+            mDesc = savedInstanceState.getString("mDesc");
+            mImgUrl = savedInstanceState.getString("mImgUrl");
+            mCategories = savedInstanceState.getString("mCategories");
+            populateViews();
+
+
+        }
+
+
         return rootView;
     }
 
@@ -102,58 +118,65 @@ public class BookDetail extends MyFragment implements LoaderManager.LoaderCallba
             return;
         }
 
-        bookTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.TITLE));
-        ((TextView) rootView.findViewById(R.id.fullBookTitle)).setText(bookTitle);
+        mBookTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.TITLE));
+        mBookSubTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.SUBTITLE));
+        mDesc = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.DESC));
+        mAuthors = data.getString(data.getColumnIndex(AlexandriaContract.AuthorEntry.AUTHOR));
+        mImgUrl = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.IMAGE_URL));
+        mCategories = data.getString(data.getColumnIndex(AlexandriaContract.CategoryEntry.CATEGORY));
+        populateViews();
+
+    }
+
+    private void populateViews(){
+
+        ((TextView) rootView.findViewById(R.id.fullBookTitle)).setText(mBookTitle);
 
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text) + bookTitle);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text) + mBookTitle);
         if (shareActionProvider != null)
             shareActionProvider.setShareIntent(shareIntent);
 
-        String bookSubTitle = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.SUBTITLE));
-        ((TextView) rootView.findViewById(R.id.fullBookSubTitle)).setText(bookSubTitle);
+        ((TextView) rootView.findViewById(R.id.fullBookSubTitle)).setText(mBookSubTitle);
 
-        String desc = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.DESC));
-        ((TextView) rootView.findViewById(R.id.fullBookDesc)).setText(desc);
-
-        String authors = data.getString(data.getColumnIndex(AlexandriaContract.AuthorEntry.AUTHOR));
+        ((TextView) rootView.findViewById(R.id.fullBookDesc)).setText(mDesc);
 
         //some books returned with null authors, this if is to handle such cases
-        if (authors != null) {
-            String[] authorsArr = authors.split(",");
+        if (mAuthors != null) {
+            String[] authorsArr = mAuthors.split(",");
             ((TextView) rootView.findViewById(R.id.authors)).setLines(authorsArr.length);
-            ((TextView) rootView.findViewById(R.id.authors)).setText(authors.replace(",", "\n"));
+            ((TextView) rootView.findViewById(R.id.authors)).setText(mAuthors.replace(",", "\n"));
         }
-        String imgUrl = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.IMAGE_URL));
-        if(Patterns.WEB_URL.matcher(imgUrl).matches()){
+        if(Patterns.WEB_URL.matcher(mImgUrl).matches()){
             ImageView fullBookCover = (ImageView) rootView.findViewById(R.id.fullBookCover);
-            Utility.downloadImageToView(imgUrl, fullBookCover, getActivity());
-            //new DownloadImage((ImageView) rootView.findViewById(R.id.fullBookCover)).execute(imgUrl);
+            Utility.downloadImageToView(mImgUrl, fullBookCover, getActivity());
             fullBookCover.setVisibility(View.VISIBLE);
         }
 
-        String categories = data.getString(data.getColumnIndex(AlexandriaContract.CategoryEntry.CATEGORY));
-        ((TextView) rootView.findViewById(R.id.categories)).setText(categories);
+        ((TextView) rootView.findViewById(R.id.categories)).setText(mCategories);
 
-        if(rootView.findViewById(R.id.right_container)!=null){
-            rootView.findViewById(R.id.backButton).setVisibility(View.INVISIBLE);
-        }
 
     }
+
 
     @Override
     public void onLoaderReset(android.support.v4.content.Loader<Cursor> loader) {
 
     }
 
+
     @Override
-    public void onPause() {
-        super.onPause();
-//        super.onDestroyView();// why?
-//        if(MainActivity.IS_TABLET && rootView.findViewById(R.id.right_container)==null){
-//            getActivity().getSupportFragmentManager().popBackStack();
-//        }
+    public void onSaveInstanceState(Bundle outState) {
+
+        outState.putString("mBookTitle", mBookTitle);
+        outState.putString("mBookSubTitle", mBookSubTitle);
+        outState.putString("mDesc", mDesc);
+        outState.putString("mAuthors", mAuthors);
+        outState.putString("mImgUrl", mImgUrl);
+        outState.putString("mCategories", mCategories);
+
+        super.onSaveInstanceState(outState);
     }
 }

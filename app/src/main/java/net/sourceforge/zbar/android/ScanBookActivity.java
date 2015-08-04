@@ -12,6 +12,7 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
 
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.FrameLayout;
@@ -33,7 +34,7 @@ import net.sourceforge.zbar.Config;
 
 import it.jaschke.alexandria.R;
 
-public class ScanBookActivity extends Activity
+public class ScanBookActivity extends Activity implements SurfaceHolder.Callback
 {
 
     Intent mIntent;
@@ -84,7 +85,6 @@ public class ScanBookActivity extends Activity
         mCamera.setPreviewCallback(previewCb);
         mCamera.startPreview();
         previewing = true;
-        mCamera.autoFocus(autoFocusCB);
 
 
 //        scanButton = (Button)findViewById(R.id.ScanButton);
@@ -179,4 +179,26 @@ public class ScanBookActivity extends Activity
             autoFocusHandler.postDelayed(doAutoFocus, 1000);
         }
     };
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        mCamera.autoFocus(autoFocusCB);
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SurfaceHolder surfaceHolder = mPreview.getHolder();
+        surfaceHolder.addCallback(this);
+    }
 }
